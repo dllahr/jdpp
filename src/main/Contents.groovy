@@ -10,4 +10,7 @@ class Contents {
 
     List<String> headerFileContents
     List<String> cppFileContents
+
+    String getHeaderFilename() {return "${className}.h"}
+    String getClassFilename() {return "${className}.cpp"}
 }

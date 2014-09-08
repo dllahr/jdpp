@@ -1,6 +1,9 @@
+#include <iostream>
 
 //this is my first example
 class example001 {
+    public:
+        int x;
 
-
+        void y() {std::cout << "hello JD (aka John Doench)\n";}
 };

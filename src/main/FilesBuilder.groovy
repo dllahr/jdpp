@@ -11,14 +11,14 @@ class FilesBuilder {
     }
 
     void build(Contents contents, File directory) {
-        File headerFile = new File(directory, contents.className + ".h")
+        File headerFile = new File(directory, contents.headerFilename)
 
         def lines = new LinkedList(contents.commonPrefixLines)
         lines.addAll(contents.headerFileContents)
 
         linesToFile.write(lines, headerFile)
 
-        File cppFile = new File(directory, contents.className + ".cpp")
+        File cppFile = new File(directory, contents.classFilename)
 
         lines = new LinkedList(contents.commonPrefixLines)
         lines.addAll(contents.cppFileContents)
