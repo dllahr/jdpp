@@ -1,0 +1,10 @@
+#include <iostream>
+
+using namespace std;
+
+class example002 {
+    public:
+        example002() {
+            cout << "have a constructor.  probably shouldn't print from it though\n";
+        }
+};
