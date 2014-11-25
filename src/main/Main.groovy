@@ -1,69 +1,102 @@
 package main
+//TODO: handle code file without class
+//TODO: handle constructors
 
 /**
  * Created by dlahr on 7/20/14.
  */
 class Main {
-    public static void main(String[] args) {
-        println("jd++ compiler")
+    public static final String newline = "\n"
 
-        FilesBuilder filesBuilder = new FilesBuilder()
+    public static void main(String[] args) {
+        println("jd++ compiler v0.1")
 
         for (String filename : args) {
             File file = new File(filename);
             println(file.absolutePath)
 
-            List<String> lines = readFile(file)
+            String fileText = file.text
 
             Contents contents = new Contents()
 
-            int classDefLineIndex = lines.findIndexOf({String l -> l.startsWith("class ")})
+            int classDefIndex = fileText.indexOf("class ")
 
-            contents.commonPrefixLines = lines.subList(0, classDefLineIndex)
+            contents.commonPrefixLines = fileText.substring(0, classDefIndex)
 
-            List<String> body = lines.subList(classDefLineIndex, lines.size())
+            contents.className = getClassNameFromClassDefLine(fileText.substring(classDefIndex))
 
-            contents.headerFileContents = new LinkedList<>()
-            contents.cppFileContents = new LinkedList<>()
 
-            String classDefLine = body.get(0)
-            int endIndex = classDefLine.endsWith("{") ? classDefLine.length() - 1 : classDefLine.length()
-            contents.className = classDefLine.substring(6, endIndex).trim()
+            contents.cppFileContents.append("#include \"${contents.generateHeaderFilename()}\"$newline")
+            contents.cppFileContents.append(newline)
 
-            contents.cppFileContents.add("#include \"${contents.headerFilename}\"")
-            contents.cppFileContents.add("")
+            //get class declaration e.g. class example001 {
+            int classOpeningBraceIndex = fileText.indexOf("{")
+            String classDeclarationLine = fileText.substring(classDefIndex, classOpeningBraceIndex+1)
+            contents.headerFileContents.append(classDeclarationLine)
 
-            for (String line : body) {
-                String[] split = line.replaceAll("\\s+", " ").split(" ")
-                split = split.findAll({String s -> s.length() > 0}) as String[]
+            char[] body = fileText.substring(classOpeningBraceIndex+1).toCharArray()
 
-                if (split.length > 1 && split[1].length() > 2 && split[1].endsWith("()")) {
-                    int methodBodyIndex = line.indexOf(split[2])
-                    String methodBody = line.substring(methodBodyIndex, line.length())
-                    contents.cppFileContents.add("${split[0]} ${contents.className}::${split[1]} $methodBody")
+            int lastIndex = 0
+            int i = 0;
+            while (i < body.length) {
 
-                    contents.headerFileContents.add("${line.substring(0, methodBodyIndex)};")
+                if (body[i] == '{') {
+                    println("method left brace found at $i")
+
+                    //add method definition / signature to header file
+                    addCharsToBuffer(lastIndex, i-1, body, contents.headerFileContents)
+                    contents.headerFileContents.append(";$newline")
+
+                    //add method signature to cpp file
+                    int s = lastIndex
+                    while (body[s] == ' ' || body[s] == '\t' || body[s] == newline.toCharArray()[0]) {s++}
+
+                    boolean spaceFound = false
+                    for (int j = s; j < i; j++) {
+                        contents.cppFileContents.append(body[j])
+
+                        if (! spaceFound && body[j] == ' ') {
+                            contents.cppFileContents.append(contents.className).append("::")
+                            spaceFound = true
+                        }
+                    }
+
+                    int methodBodyIndex = i+1
+                    while (body[methodBodyIndex] != '}') {methodBodyIndex++}
+
+                    addCharsToBuffer(i, methodBodyIndex, body, contents.cppFileContents)
+
+                    i = methodBodyIndex + 1
+                    lastIndex = i+1
                 } else {
-                    contents.headerFileContents.add(line)
+                    if (body[i] == ':' || body[i] == ';' || body[i] == '}') {
+                        println("semicolon, class definition closing right brace, or visibility level colon found at $i")
+                        addCharsToBuffer(lastIndex, i, body, contents.headerFileContents)
+                        lastIndex = i+1
+                    }
+
+                    i++
                 }
+
             }
 
-            filesBuilder.build(contents, new File("."))
+            File headerFile = new File(file.parentFile, contents.generateHeaderFilename())
+            headerFile.write(contents.generateHeaderFileContents())
+
+            File cppFile = new File(file.parentFile, contents.generateCppFilename())
+            cppFile.write(contents.generateCppFileContents())
         }
     }
 
-    static List<String> readFile(File file) {
-        List<String> result = new LinkedList<>()
+    static String getClassNameFromClassDefLine(String body) {
+        int endIndex = body.indexOf("{")
+        return body.substring(6, endIndex).trim()
+    }
 
-        BufferedReader reader = new BufferedReader(new FileReader(file))
-
-        String line
-        while ((line = reader.readLine()) != null) {
-            result.add(line)
+    static void addCharsToBuffer(int startIndex, int endIndex, char[] chars, StringBuilder builder) {
+        for (int i = startIndex; i <= endIndex; i++) {
+            builder.append(chars[i])
         }
-
-        reader.close()
-
-        return result
     }
 }
+
