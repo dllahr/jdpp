@@ -1,6 +1,7 @@
 package main
+
+//TODO:  handle nested curly braces - for loops, if statements, etc.  Demonstrated in example003 and MethodDefinitionTest.testParseWithForLoop()
 //TODO: handle code file without class
-//TODO: handle constructors
 
 /**
  * Created by dlahr on 7/20/14.

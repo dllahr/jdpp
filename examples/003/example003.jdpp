@@ -1,0 +1,14 @@
+#include <iostream>
+
+using namespace std;
+
+class example003 {
+    public:
+        do_stuff() {
+            int sum = 0;
+            for (int i = 0; i < 10; i++) {
+                sum += i;
+            }
+            cout << sum << endl;
+        }
+};
