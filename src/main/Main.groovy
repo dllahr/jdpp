@@ -36,6 +36,8 @@ class Main {
 
             char[] body = fileText.substring(classOpeningBraceIndex+1).toCharArray()
 
+            MethodDefinition methodDefinition = new MethodDefinition()
+
             int lastIndex = 0
             int i = 0;
             while (i < body.length) {
@@ -48,26 +50,20 @@ class Main {
                     contents.headerFileContents.append(";$newline")
 
                     //add method signature to cpp file
-                    int s = lastIndex
-                    while (body[s] == ' ' || body[s] == '\t' || body[s] == newline.toCharArray()[0]) {s++}
+                    methodDefinition.parse(lastIndex, i, body)
 
-                    boolean spaceFound = false
-                    for (int j = s; j < i; j++) {
-                        contents.cppFileContents.append(body[j])
-
-                        if (! spaceFound && body[j] == ' ') {
-                            contents.cppFileContents.append(contents.className).append("::")
-                            spaceFound = true
-                        }
+                    if (methodDefinition.modifiers) {
+                        contents.cppFileContents.append(methodDefinition.modifiers).append(" ")
                     }
+                    contents.cppFileContents.append(contents.className).append("::")
+                    contents.cppFileContents.append(methodDefinition.nameAndAfter)
 
-                    int methodBodyIndex = i+1
-                    while (body[methodBodyIndex] != '}') {methodBodyIndex++}
+                    int methodBodyIndex = body.findIndexOf(i, {char it -> it == '}'})
 
                     addCharsToBuffer(i, methodBodyIndex, body, contents.cppFileContents)
 
                     i = methodBodyIndex + 1
-                    lastIndex = i+1
+                    lastIndex = i
                 } else {
                     if (body[i] == ':' || body[i] == ';' || body[i] == '}') {
                         println("semicolon, class definition closing right brace, or visibility level colon found at $i")
