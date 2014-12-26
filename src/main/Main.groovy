@@ -95,10 +95,10 @@ class Main {
 
             contents.headerFileContents.append("};")
 
-            File headerFile = new File(file.parentFile, contents.generateHeaderFilename())
+            File headerFile = new File(contents.generateHeaderFilename())
             headerFile.write(contents.generateHeaderFileContents())
 
-            File cppFile = new File(file.parentFile, contents.generateCppFilename())
+            File cppFile = new File(contents.generateCppFilename())
             cppFile.write(contents.generateCppFileContents())
         }
     }
@@ -158,7 +158,8 @@ class Main {
      * @return
      */
     static int indexOfMemberVariableSeminColon(String text) {
-        String memberVariableSemiColon = text.find("[\\w*,\\s*];")
+//        String memberVariableSemiColon = text.find("[\\w*,\\s*];")
+        String memberVariableSemiColon = text.find("[\\w*,\\s*, }];")
         if (memberVariableSemiColon) {
             int internalOffset = memberVariableSemiColon.indexOf(";")
             return text.indexOf(memberVariableSemiColon) + internalOffset
