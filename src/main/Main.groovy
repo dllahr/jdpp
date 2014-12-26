@@ -1,5 +1,7 @@
 package main
 
+import main.Entry.EntryType
+
 //TODO:  handle nested curly braces - for loops, if statements, etc.  Demonstrated in example003 and MethodDefinitionTest.testParseWithForLoop()
 //TODO: handle code file without class
 
@@ -35,23 +37,42 @@ class Main {
             String classDeclarationLine = fileText.substring(classDefIndex, classOpeningBraceIndex+1)
             contents.headerFileContents.append(classDeclarationLine)
 
-            char[] body = fileText.substring(classOpeningBraceIndex+1).toCharArray()
+            String body = fileText.substring(classOpeningBraceIndex+1)
+            int matchingClassRightCurlyBraceIndex = findMatchingCurlyBrace(body, 0)
+            if (matchingClassRightCurlyBraceIndex == -1) {
+                System.err.println("did not find closing curly brace for class in file ${file.absolutePath}")
+                return
+            }
+            body = body.substring(0, matchingClassRightCurlyBraceIndex)
+
 
             MethodDefinition methodDefinition = new MethodDefinition()
 
-            int lastIndex = 0
+            //1.  find closing brace for class - use curly brace depth & trailing semicolon - to define body
+            //2.  work through body - need to look for:
+            //      a.  scope declaration (private:, public:, private :, public :, etc.)
+            //      b.  member variable (int a;, int * b; std::cout * a)
+            //      c.  method declaration (virtual std::cout * my_meth(int a, int * b, int &c, std::cout * d) {
+
             int i = 0;
-            while (i < body.length) {
+            while (i < body.length() && ! body.substring(i).matches("\\s+")) {
 
-                if (body[i] == '{') {
-                    println("method left brace found at $i")
+                Entry entry = getNextEntry(body.substring(i))
 
-                    //add method definition / signature to header file
-                    addCharsToBuffer(lastIndex, i-1, body, contents.headerFileContents)
+                if (! entry) {
+                    int lineNum = body.substring(0,i).findAll(newline).size()
+                    System.err.println("in file ${file.absolutePath} could not find recognizable entry after line number $lineNum")
+                    return
+                }
+
+                if (EntryType.scopeDeclaration == entry.entryType || EntryType.memberVariable == entry.entryType) {
+                    contents.headerFileContents.append(body.substring(i, i + entry.endIndex + 1))
+                    i += entry.endIndex + 1
+                } else if (EntryType.methodDeclaration == entry.entryType) {
+                    contents.headerFileContents.append(body.substring(i, i + entry.endIndex - 1))
                     contents.headerFileContents.append(";$newline")
 
-                    //add method signature to cpp file
-                    methodDefinition.parse(lastIndex, i, body)
+                    methodDefinition.parse(i, i + entry.endIndex, body.toCharArray())
 
                     if (methodDefinition.modifiers) {
                         contents.cppFileContents.append(methodDefinition.modifiers).append(" ")
@@ -59,23 +80,20 @@ class Main {
                     contents.cppFileContents.append(contents.className).append("::")
                     contents.cppFileContents.append(methodDefinition.nameAndAfter)
 
-                    int methodBodyIndex = body.findIndexOf(i, {char it -> it == '}'})
-
-                    addCharsToBuffer(i, methodBodyIndex, body, contents.cppFileContents)
-
-                    i = methodBodyIndex + 1
-                    lastIndex = i
-                } else {
-                    if (body[i] == ':' || body[i] == ';' || body[i] == '}') {
-                        println("semicolon, class definition closing right brace, or visibility level colon found at $i")
-                        addCharsToBuffer(lastIndex, i, body, contents.headerFileContents)
-                        lastIndex = i+1
+                    int closeCurlyBraceIndex = findMatchingCurlyBrace(body, i + entry.endIndex)
+                    if (-1 == closeCurlyBraceIndex) {
+                        System.err.println("could not find closing curly brace for method.  file:  ${file.absolutePath} " +
+                                "method: ${body.substring(i, i+entry.endIndex)}")
+                        return
                     }
 
-                    i++
-                }
+                    contents.cppFileContents.append(body.substring(i + entry.endIndex + 1, closeCurlyBraceIndex + 1))
 
+                    i = closeCurlyBraceIndex + 1
+                }
             }
+
+            contents.headerFileContents.append("};")
 
             File headerFile = new File(file.parentFile, contents.generateHeaderFilename())
             headerFile.write(contents.generateHeaderFileContents())
@@ -95,5 +113,88 @@ class Main {
             builder.append(chars[i])
         }
     }
+
+    static int findMatchingCurlyBrace(String text, int si) {
+
+        int i = si
+        int curlyBraceDepth = 0
+        while (i < text.length() && curlyBraceDepth >= 0) {
+            if (text.charAt(i) == '{') {
+                curlyBraceDepth++
+            } else if (text.charAt(i) == '}') {
+                curlyBraceDepth--
+            }
+
+            i++
+        }
+
+        if (curlyBraceDepth < 0) {
+            return i-1
+        } else {
+            return -1
+        }
+    }
+
+    /**
+     * return the index of the colon that is at the end of a scope declaration within the text, if found - otherwise
+     * return -1
+     * @param text
+     * @return
+     */
+    static int indexOfScopeDeclarationColon(String text) {
+        String scopeDeclarationColon = text.find("[\\w*,\\s*]:(?!:)")
+        if (scopeDeclarationColon) {
+            int internalOffset = scopeDeclarationColon.indexOf(":")
+            return text.indexOf(scopeDeclarationColon) + internalOffset
+        } else {
+            return -1
+        }
+    }
+
+    /**
+     * return the index of the semicolon that is at the end of member variable declaration, if found - otherwise return
+     * -1
+     * @param text
+     * @return
+     */
+    static int indexOfMemberVariableSeminColon(String text) {
+        String memberVariableSemiColon = text.find("[\\w*,\\s*];")
+        if (memberVariableSemiColon) {
+            int internalOffset = memberVariableSemiColon.indexOf(";")
+            return text.indexOf(memberVariableSemiColon) + internalOffset
+        } else {
+            return -1
+        }
+    }
+
+
+    static Entry getNextEntry(String text) {
+        int scope = indexOfScopeDeclarationColon(text)
+        if (-1 == scope) {
+            scope = Integer.MAX_VALUE
+        }
+
+        int member = indexOfMemberVariableSeminColon(text)
+        if (-1 == member) {
+            member = Integer.MAX_VALUE
+        }
+
+        MethodDefinitionFinder mdf = new MethodDefinitionFinder()
+        int method = Integer.MAX_VALUE
+        if (mdf.findNextMethod(text)) {
+            method = mdf.endIndex
+        }
+
+        if (scope < member && scope < method) {
+            return new Entry(EntryType.scopeDeclaration, scope)
+        } else if (member < scope && member < method) {
+            return new Entry(EntryType.memberVariable, member)
+        } else if (method < scope && method < member) {
+            return new Entry(EntryType.methodDeclaration, method)
+        } else {
+            return null
+        }
+    }
+
 }
 
