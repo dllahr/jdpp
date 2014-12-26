@@ -45,18 +45,20 @@ class foo {
     public:
 
         virtual void hello(int my, pretty how) {
-
             int sum = 0;
             for (int i = 0; i < 10; i++) {
                 sum += i;
             }
 
         }
-
-    """
+"""
 
         final int startIndex = e.indexOf("virtual") - 2
-        final int endIndex = e. lastIndexOf("{") - 1
+        final int endIndex = e. lastIndexOf("}")
+
+        println("e from startIndex to endIndex inclusive:")
+        println(e.substring(startIndex, endIndex+1))
+        println("---------------")
 
         MethodDefinition md = new MethodDefinition()
 
