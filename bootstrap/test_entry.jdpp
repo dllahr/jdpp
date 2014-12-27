@@ -1,0 +1,22 @@
+#include "entry.h"
+
+#include <iostream>
+
+using namespace std;
+
+class test_entry {
+  public:
+    void test() {
+      entry::entry_type et = entry::scope_declaration;
+      cout << "et: " << et << endl;
+
+      entry ent(entry::member_variable, 10);
+      cout << "ent: " << ent.my_entry_type << " " << ent.end_index << endl;
+    }
+
+    void run_all() {
+      cout << "test_entry\n";
+      test();
+    }
+
+};
