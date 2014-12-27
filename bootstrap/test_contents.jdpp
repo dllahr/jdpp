@@ -1,0 +1,50 @@
+
+#include "contents.h"
+
+#include <iostream>
+#include <string>
+
+using namespace std;
+class test_contents : contents {
+  public:
+    test_contents() {
+      *class_name += "my_class_name";
+      
+      *common_prefix_lines += "#include <iostream> \n\nusing namespace std; \n\n";
+
+      *header_file_contents += "class my_class_name {\n  public:\n    my_class_name();\n    void do_something();\n};";
+
+      *cpp_file_contents += "my_class_name::my_class_name() {\n  int i = 0;\n}\n\nvoid my_class_name::do_something() {\n  cout << \"done!\\n\";\n}";
+    }
+
+    void test_generate_header_filename() {
+      cout << "generate_header_filename():  " << *(generate_header_filename()) << endl;
+    }
+
+    void test_generate_cpp_filename() {
+      cout << "generate_cpp_filename():  " << *(generate_cpp_filename()) << endl;
+    }
+
+    void test_generate_ifndef() {
+      cout << "generate_ifndef():\n" << *(generate_ifndef()) << endl;      
+    }
+
+    void test_generate_header_file_contents() {
+      cout << "generate_header_file_contents():\n" << *(generate_header_file_contents()) << endl;
+    }
+
+    void test_generate_cpp_file_contents() {
+      cout << "generate_cpp_file_contents():\n" << (*generate_cpp_file_contents()) << endl;
+    }
+
+    void run_all() {
+      cout << "test_contents\n";
+
+      test_generate_header_filename();
+      test_generate_cpp_filename();
+      test_generate_ifndef();
+      test_generate_header_file_contents();
+      test_generate_cpp_file_contents();
+    }
+
+};

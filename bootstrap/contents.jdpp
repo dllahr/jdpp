@@ -1,0 +1,71 @@
+
+#include <string>
+
+using namespace std;
+
+class contents {
+  public:
+    string * class_name;
+    string * common_prefix_lines;
+    
+    string * header_file_contents;
+    string * cpp_file_contents;
+
+    contents() {
+      class_name = new string();
+      common_prefix_lines = new string();
+      header_file_contents = new string();
+      cpp_file_contents = new string();
+    }
+
+    string * generate_header_filename() {
+      string * r = new string(*class_name);
+      *r += ".h";
+      return r;
+    }
+
+    string * generate_cpp_filename() {
+      string * r = new string(*class_name);
+      *r += ".cpp";
+      return r;
+    }
+
+    string * generate_header_file_contents() {
+      string * hfc = generate_ifndef();
+
+      *hfc += "\n";
+
+      *hfc += *common_prefix_lines;
+
+      *hfc += *header_file_contents;
+
+      *hfc += "\n\n";
+
+      *hfc += "#endif";
+
+      return hfc;
+    }
+
+    string * generate_cpp_file_contents() {
+      string * cfc = new string(*common_prefix_lines);
+
+      *cfc += *cpp_file_contents;
+
+      return cfc;
+    }
+
+  protected:
+    string * generate_ifndef() {
+      string * hfc = new string();
+
+      *hfc += "#ifndef _";
+      *hfc += *class_name;
+      *hfc += "_h\n";
+      
+      *hfc += "#define _";
+      *hfc += *class_name;
+      *hfc += "_h\n";
+
+      return hfc;
+    }
+};
