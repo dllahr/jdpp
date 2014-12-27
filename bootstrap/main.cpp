@@ -1,15 +1,19 @@
 #include <iostream>
 
 #include "entry.h"
+#include "test_contents.h"
+#include "test_entry.h"
 
 using namespace std;
 
 int main() {
     cout << "jd++ compiler v0.2" << endl;
 
-    entry::entry_type et = entry::scope_declaration;
-    cout << "et:  " << et << endl;
+    (new test_entry())->run_all();
+    cout << endl;
+    (new test_contents())->run_all();
+    
 
-    entry ent(entry::scope_declaration, 10);
-    cout << "ent:  " << ent.my_entry_type << " " << ent.end_index << endl;
+
+
 }
