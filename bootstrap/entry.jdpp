@@ -1,0 +1,15 @@
+
+
+class entry {
+  public:
+    enum entry_type {scope_declaration, member_variable, method_declaration};
+
+    entry_type my_entry_type;;
+
+    int end_index;
+
+    entry(entry_type et, int ei) {
+        my_entry_type = et;
+	end_index = ei;
+    }
+};
