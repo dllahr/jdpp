@@ -81,4 +81,24 @@ public:
         assertEquals(18, entry.endIndex)
 
     }
+
+
+    void testGetClassNameFromClassDefLine() {
+        String text = """class my_class {
+  private:
+    int a;
+  public:
+    int b;
+"""
+
+        assertTrue(Main.getClassNameFromClassDefLine(text).equals("my_class"))
+
+        text = """class my_class : another_parent_class {
+  private:
+    int a;
+  public:
+    int b;
+"""
+        assertTrue(Main.getClassNameFromClassDefLine(text).equals("my_class"))
+    }
 }

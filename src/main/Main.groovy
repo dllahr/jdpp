@@ -79,6 +79,7 @@ class Main {
                     }
                     contents.cppFileContents.append(contents.className).append("::")
                     contents.cppFileContents.append(methodDefinition.nameAndAfter)
+                    contents.cppFileContents.append(newline)
 
                     int closeCurlyBraceIndex = findMatchingCurlyBrace(body, i + entry.endIndex)
                     if (-1 == closeCurlyBraceIndex) {
@@ -88,6 +89,7 @@ class Main {
                     }
 
                     contents.cppFileContents.append(body.substring(i + entry.endIndex + 1, closeCurlyBraceIndex + 1))
+                    contents.cppFileContents.append(newline).append(newline)
 
                     i = closeCurlyBraceIndex + 1
                 }
@@ -105,6 +107,10 @@ class Main {
 
     static String getClassNameFromClassDefLine(String body) {
         int endIndex = body.indexOf("{")
+        final int alternateEndIndex = body.substring(0,endIndex).indexOf(":")
+        if (alternateEndIndex != -1) {
+            endIndex = alternateEndIndex
+        }
         return body.substring(6, endIndex).trim()
     }
 
